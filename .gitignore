@@ -17,3 +17,10 @@ Thumbs.db
 
 # Jupyter
 .ipynb_checkpoints
+
+# Data
+data/
+*.csv
+
+# Jupyter
+.ipynb_checkpoints
