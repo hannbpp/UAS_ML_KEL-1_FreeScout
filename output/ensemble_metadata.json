@@ -1,0 +1,24 @@
+{
+    "creation_date": "2025-11-26 16:23:01",
+    "num_models": 5,
+    "models_used": [
+        "Naive Bayes",
+        "Random Forest",
+        "LightGBM",
+        "SVM",
+        "XGBoost"
+    ],
+    "has_soft_voting": true,
+    "has_weighted_voting": true,
+    "has_stacking": true,
+    "test_samples": 64,
+    "soft_accuracy": 0.796875,
+    "weighted_accuracy": 0.78125,
+    "stack_accuracy": 0.78125,
+    "label_mapping": {
+        "0": "Low",
+        "1": "Medium",
+        "2": "High",
+        "3": "Urgent"
+    }
+}

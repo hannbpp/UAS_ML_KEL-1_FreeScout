@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Priority Classification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.10.0/Recharts.js"></script>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div class="container mx-auto p-6">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">📧 Email Priority Classification</h1>
+            <p class="text-gray-600">Machine Learning API for Email Priority Prediction</p>
+        </div>
+
+        <!-- API Status -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-white rounded-lg shadow p-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-gray-600">API Status</p>
+                        <p id="apiStatus" class="text-lg font-semibold text-red-600">❌ Checking...</p>
+                    </div>
+                    <span class="text-3xl">⚡</span>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <p class="text-sm text-gray-600">Models Loaded</p>
+                <p id="modelsCount" class="text-lg font-semibold">0 models</p>
+            </div>
+            <div class="bg-white rounded-lg shadow p-4">
+                <p class="text-sm text-gray-600">Expected Features</p>
+                <p class="text-lg font-semibold">50</p>
+            </div>
+        </div>
+
+        <!-- API URL Input -->
+        <div class="bg-white rounded-lg shadow p-4 mb-6">
+            <label class="text-sm font-semibold text-gray-700 block mb-2">API URL</label>
+            <input id="apiUrl" type="text" value="http://127.0.0.1:8000"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+
+        <!-- Tabs -->
+        <div class="bg-white rounded-lg shadow mb-6">
+            <div class="flex border-b">
+                <button onclick="switchTab('single')"
+                    class="flex-1 py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600 transition">🎯 Single
+                    Prediction</button>
+                <button onclick="switchTab('batch')"
+                    class="flex-1 py-3 px-4 font-semibold text-gray-600 hover:text-gray-800 transition">📦 Batch
+                    Prediction</button>
+                <button onclick="switchTab('info')"
+                    class="flex-1 py-3 px-4 font-semibold text-gray-600 hover:text-gray-800 transition">ℹ️ API
+                    Info</button>
+            </div>
+
+            <div class="p-6">
+                <!-- Single Prediction Tab -->
+                <div id="singleTab" class="block">
+                    <h2 class="text-xl font-bold mb-4">Single Email Prediction</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                <div class="flex justify-between items-center mb-4">
+                                    <label class="text-sm font-semibold text-gray-700">Features (50 values)</label>
+                                    <button onclick="generateRandomSingle()"
+                                        class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">
+                                        Random ✨
+                                    </button>
+                                </div>
+                                <div id="singleFeatures" class="grid grid-cols-5 gap-2 max-h-64 overflow-y-auto"></div>
+                            </div>
+                            <button onclick="predictSingle()"
+                                class="w-full py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700">
+                                🚀 Predict Priority
+                            </button>
+                        </div>
+                        <div id="singleResult"></div>
+                    </div>
+                </div>
+
+                <!-- Batch Prediction Tab -->
+                <div id="batchTab" class="hidden">
+                    <h2 class="text-xl font-bold mb-4">Batch Email Prediction</h2>
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                <div class="flex justify-between items-center mb-4">
+                                    <label class="text-sm font-semibold text-gray-700">Number of Emails</label>
+                                    <select id="batchCount" onchange="updateBatchCount()"
+                                        class="px-3 py-1 border border-gray-300 rounded text-sm">
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="5" selected>5</option>
+                                    </select>
+                                </div>
+                                <button onclick="generateRandomBatch()"
+                                    class="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 mb-4">
+                                    Generate Random Data
+                                </button>
+                                <div id="batchFeatures" class="space-y-4 max-h-96 overflow-y-auto"></div>
+                            </div>
+                            <button onclick="predictBatch()"
+                                class="w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700">
+                                📦 Predict Batch
+                            </button>
+                        </div>
+                        <div id="batchResult"></div>
+                    </div>
+                </div>
+
+                <!-- API Info Tab -->
+                <div id="infoTab" class="hidden space-y-6">
+                    <div>
+                        <h3 class="text-lg font-bold mb-3">🔧 API Endpoints</h3>
+                        <div class="space-y-2">
+                            <div class="bg-gray-50 p-3 rounded border-l-4 border-blue-500">
+                                <p class="font-mono text-sm text-blue-600">GET /health</p>
+                                <p class="text-sm text-gray-600">Check API health status</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded border-l-4 border-green-500">
+                                <p class="font-mono text-sm text-green-600">GET /model_info</p>
+                                <p class="text-sm text-gray-600">Get model information</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded border-l-4 border-purple-500">
+                                <p class="font-mono text-sm text-purple-600">POST /predict</p>
+                                <p class="text-sm text-gray-600">Single prediction</p>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded border-l-4 border-orange-500">
+                                <p class="font-mono text-sm text-orange-600">POST /predict_batch</p>
+                                <p class="text-sm text-gray-600">Batch prediction</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold mb-3">📊 Model Information</h3>
+                        <div id="modelInfo" class="bg-gray-50 rounded-lg p-4"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center text-gray-600 text-sm">
+            <p>Email Priority Classification API v1.0.0</p>
+            <p>Built with FastAPI & Machine Learning</p>
+        </div>
+    </div>
+
+    <script>
+        let singleFeatures = Array(50).fill(0.5);
+        let batchFeatures = Array(5).fill(null).map(() => Array(50).fill(0.5));
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkHealth();
+            renderSingleFeatures();
+            renderBatchFeatures();
+        });
+
+        function getApiUrl() {
+            return document.getElementById('apiUrl').value;
+        }
+
+        async function checkHealth() {
+            try {
+                const res = await fetch(`${getApiUrl()}/health`);
+                const data = await res.json();
+                document.getElementById('apiStatus').textContent = '✅ Running';
+                document.getElementById('apiStatus').className = 'text-lg font-semibold text-green-600';
+                document.getElementById('modelsCount').textContent = `${data.models_loaded} models`;
+                fetchModelInfo();
+            } catch (err) {
+                document.getElementById('apiStatus').textContent = '❌ Offline';
+            }
+        }
+
+        async function fetchModelInfo() {
+            try {
+                const res = await fetch(`${getApiUrl()}/model_info`);
+                const data = await res.json();
+                document.getElementById('modelInfo').innerHTML = `
+                    <p><span class="font-semibold">Ensemble Method:</span> ${data.ensemble_method}</p>
+                    <p><span class="font-semibold">Total Models:</span> ${data.total_models}</p>
+                    <p><span class="font-semibold">Models:</span> ${data.individual_models.join(', ')}</p>
+                    <p class="mt-2"><span class="font-semibold">Priority Levels:</span></p>
+                    <div class="flex gap-2 mt-2">
+                        ${Object.values(data.label_mapping).map(label => `<span class="px-3 py-1 rounded-full text-sm font-semibold bg-gray-200">${label}</span>`).join('')}
+                    </div>
+                `;
+            } catch (err) {
+                console.error('Failed to fetch model info');
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('[id$="Tab"]').forEach(t => t.classList.add('hidden'));
+            document.getElementById(tab + 'Tab').classList.remove('hidden');
+
+            document.querySelectorAll('button').forEach((btn, idx) => {
+                if (idx < 3) {
+                    btn.className = btn.textContent.includes(['🎯', '📦', 'ℹ️'][idx])
+                        ? 'flex-1 py-3 px-4 font-semibold text-blue-600 border-b-2 border-blue-600 transition'
+                        : 'flex-1 py-3 px-4 font-semibold text-gray-600 hover:text-gray-800 transition';
+                }
+            });
+        }
+
+        function renderSingleFeatures() {
+            const container = document.getElementById('singleFeatures');
+            container.innerHTML = singleFeatures.map((val, idx) => `
+                <input 
+                    type="number" min="0" max="1" step="0.01" 
+                    value="${val.toFixed(2)}"
+                    onchange="singleFeatures[${idx}] = parseFloat(this.value)"
+                    class="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-400"
+                />
+            `).join('');
+        }
+
+        function renderBatchFeatures() {
+            const count = parseInt(document.getElementById('batchCount').value);
+            const container = document.getElementById('batchFeatures');
+            container.innerHTML = batchFeatures.slice(0, count).map((features, batchIdx) => `
+                <div class="border border-gray-300 rounded p-3 bg-white">
+                    <p class="text-sm font-semibold mb-2">Email #${batchIdx + 1}</p>
+                    <div class="grid grid-cols-10 gap-1">
+                        ${features.map((val, featureIdx) => `
+                            <input 
+                                type="number" min="0" max="1" step="0.01" 
+                                value="${val.toFixed(2)}"
+                                onchange="batchFeatures[${batchIdx}][${featureIdx}] = parseFloat(this.value)"
+                                class="w-full px-1 py-1 border border-gray-300 rounded text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+                            />
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateRandomSingle() {
+            singleFeatures = singleFeatures.map(() => Math.random());
+            renderSingleFeatures();
+        }
+
+        function generateRandomBatch() {
+            const count = parseInt(document.getElementById('batchCount').value);
+            batchFeatures = Array(count).fill(null).map(() => Array(50).fill(0).map(() => Math.random()));
+            renderBatchFeatures();
+        }
+
+        function updateBatchCount() {
+            renderBatchFeatures();
+        }
+
+        async function predictSingle() {
+            try {
+                const res = await fetch(`${getApiUrl()}/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ features: singleFeatures })
+                });
+                const data = await res.json();
+                displaySingleResult(data);
+            } catch (err) {
+                document.getElementById('singleResult').innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4"><p class="text-red-700 text-sm">${err.message}</p></div>`;
+            }
+        }
+
+        async function predictBatch() {
+            try {
+                const count = parseInt(document.getElementById('batchCount').value);
+                const res = await fetch(`${getApiUrl()}/predict_batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ features_list: batchFeatures.slice(0, count) })
+                });
+                const data = await res.json();
+                displayBatchResult(data);
+            } catch (err) {
+                document.getElementById('batchResult').innerHTML = `<div class="bg-red-50 border border-red-200 rounded-lg p-4"><p class="text-red-700 text-sm">${err.message}</p></div>`;
+            }
+        }
+
+        function displaySingleResult(data) {
+            const colors = {
+                'Low': 'bg-green-100 text-green-800',
+                'Medium': 'bg-yellow-100 text-yellow-800',
+                'High': 'bg-orange-100 text-orange-800',
+                'Urgent': 'bg-red-100 text-red-800'
+            };
+            const icons = {
+                'Urgent': '🔴', 'High': '🟠', 'Medium': '🟡', 'Low': '🟢'
+            };
+
+            document.getElementById('singleResult').innerHTML = `
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-4 border border-blue-200">
+                    <div class="text-center mb-4">
+                        <p class="text-6xl mb-2">${icons[data.prediction_label] || '⚪'}</p>
+                        <p class="text-2xl font-bold px-4 py-2 rounded-lg ${colors[data.prediction_label] || 'bg-gray-100'} inline-block">
+                            ${data.prediction_label}
+                        </p>
+                        <p class="text-sm text-gray-600 mt-2">Confidence: ${(data.confidence * 100).toFixed(2)}%</p>
+                    </div>
+                    <div class="space-y-2">
+                        ${Object.entries(data.probabilities).map(([label, prob]) => `
+                            <div>
+                                <div class="flex justify-between mb-1">
+                                    <span class="text-sm font-semibold text-gray-700">${label}</span>
+                                    <span class="text-sm text-gray-600">${(prob * 100).toFixed(1)}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full" style="width: ${prob * 100}%"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function displayBatchResult(data) {
+            const colors = {
+                'Low': 'bg-green-100 text-green-800',
+                'Medium': 'bg-yellow-100 text-yellow-800',
+                'High': 'bg-orange-100 text-orange-800',
+                'Urgent': 'bg-red-100 text-red-800'
+            };
+            const icons = {
+                'Urgent': '🔴', 'High': '🟠', 'Medium': '🟡', 'Low': '🟢'
+            };
+
+            document.getElementById('batchResult').innerHTML = `
+                <div class="space-y-3">
+                    <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
+                        <p class="text-2xl font-bold text-indigo-700">${data.total}</p>
+                        <p class="text-sm text-indigo-600">Emails Processed</p>
+                    </div>
+                    <div class="space-y-2 max-h-96 overflow-y-auto">
+                        ${data.predictions.map((pred, idx) => `
+                            <div class="rounded-lg p-3 ${colors[pred.prediction_label] || 'bg-gray-100'}">
+                                <div class="flex justify-between items-center">
+                                    <div>
+                                        <p class="font-semibold">Email #${idx + 1}</p>
+                                        <p class="text-sm">${pred.prediction_label}</p>
+                                    </div>
+                                    <span class="text-2xl">${icons[pred.prediction_label] || '⚪'}</span>
+                                </div>
+                                <p class="text-xs mt-1 opacity-75">Confidence: ${(pred.confidence * 100).toFixed(1)}%</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+
+</html>
