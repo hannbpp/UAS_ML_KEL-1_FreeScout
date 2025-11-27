@@ -1,0 +1,9 @@
+{
+  "label_mapping": {
+    "0": "Low",
+    "1": "Medium",
+    "2": "High",
+    "3": "Urgent"
+  },
+  "created_date": "2025-11-27T08:57:36.844975"
+}
